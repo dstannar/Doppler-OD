@@ -20,6 +20,7 @@ src/doppler_OD: use in combination with propagate_orbit to refine orbit estimati
 src.which_TLE: use doppler data to determine which space-track TLE belongs to us. filter TLEs from space-track using info in SALE.yaml. BE CAREFUL WITH SPACE-TRACK API REQUESTS, READ THEIR BEST PRACTICES AND DO NOT SPAM API REQUESTS
 
 Best practices:
+- USE SI UNITS EVERYWHERE
 - call SAL-E "SALE" in variable names and functions and such, the - gets too annoying
 - include docstrings for all functions you write. they can be brief
 - specify variable type for args for all funcs
