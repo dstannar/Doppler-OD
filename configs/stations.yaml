@@ -1,0 +1,14 @@
+# Ground station configs 
+
+stations:
+  Marconi:
+    lat_deg: 35.302296
+    lon_deg: -120.665158
+    alt_m: 94.0
+    min_elevation_deg: 10.0 # go ahead and change this
+
+  EEDepartment:
+    lat_deg: 35.30060
+    lon_deg: -120.66174
+    alt_m: null # what is this? someone check on google earth
+    min_elevation_deg: 10.0 # same here

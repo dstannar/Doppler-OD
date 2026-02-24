@@ -1,0 +1,30 @@
+# Mission and propagator configuration for SAL-E 
+
+# Orekit auxiliary data (Earth orientation, leap seconds, gravity, etc.).
+orekit_data_path: "orekit-data"
+
+# Space weather file for drag
+space_weather_file: "orekit-data/CSSI-Space-Weather-Data/SpaceWeather-All-v1.2.txt"
+
+# Doppler data directory: subdirs per station (SALE-Doppler/Marconi/, SALE-Doppler/EEDepartment/)
+doppler_data_dir: "SALE-Doppler"
+
+# Space-Track TLE filter: launch date (Transporter 16 projected 03.29) and launch site code (AFWTR is Vandenberg).
+launch_date: "2026-03-29"
+launch_site: "AFWTR"
+
+# INPUT INITIAL STATE HERE
+epoch_utc: "2026-03-29T12:00:00.000Z" # YYYY-MM-DDTHH:MM:SS.SSSZ
+frame: "put something here"
+position_m: [ 0.0, 0.0, 0.0 ] # SI everywhere, [m]
+velocity_mps: [ 0.0, 0.0, 0.0 ] # [m/s]
+
+# Gravity Params, anything changing in here?
+
+# Drag params
+# Using 3U average surface area (m^2).
+area_m2: 0.14
+# Drag coefficient
+cd: 2.2
+# FU mass as built (kg)
+mass_kg: 2.89
