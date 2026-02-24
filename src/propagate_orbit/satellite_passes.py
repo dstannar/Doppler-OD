@@ -5,9 +5,11 @@ has a practical class that can extract event of a pass of a satellite based on g
 location and pointing elevation. Then, using this event detector, we will use event logger to 
 give us time intervals from AOS (aquisition of signal) to LOS (loss of signal). This interval 
 signifies a "pass". We will calculate the first aos/los epochs after launch and propagate the 
-state vector to those epochs. Note one single propagated TLE could be used to feed into Satnet,
-but repeatability of new TLE every pass allows for more accurate estimations over the first week 
-of passes (accounting for how perturbations are changing over time).
+state vector to those epochs. 
+
+Note: using a single propagated TLE for the entire first week would result in poor prediction 
+due to perturbmations and initial orbit uncertainty. Thus, giving Satnet a new TLE through 
+ever pass allows for more accurate estimations over the first week of passes
 
 Inputs:
 - 
