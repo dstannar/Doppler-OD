@@ -20,6 +20,9 @@
 #initialize
 import os, sys, string, math
 import numpy as np
+# init orekit
+from setup import setup_orekit
+setup_orekit()
 
 #import orekit libraries
 import orekit
@@ -33,9 +36,23 @@ from drag_model import build_drag_force_model as drag
 from satellite_passes import detect_pass, get_pass_intervals
 
 #constants/parameters
-area = 0.14 #m2
-cd=2.2
-mass=2.89 #kg
+from configs.config import load_configs
+cfg = load_configs()
+# unpack config vals
+launch_date = cfg.launch_date
+launch_site = cfg.launch_site
+doppler_data_dir = cfg.doppler_data_dir
+orekit_data_path = cfg.orekit_data_path
+space_weather_file = cfg.space_weather_file
+epoch_utc = cfg.epoch_utc
+frame = cfg.frame
+position_m = cfg.position_m
+velocity_mps = cfg.velocity_mps
+area_m2 = cfg.area_m2
+cd = cfg.cd
+mass_kg = cfg.mass_kg
+stations = cfg.stations
+
 
 
 
