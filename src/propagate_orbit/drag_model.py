@@ -24,13 +24,29 @@ setup_orekit()
 #import libraries
 
 
-#define constants
+#constants/parameters
+from configs.config import load_configs
+cfg = load_configs()
+# unpack config vals
+launch_date = cfg.launch_date
+launch_site = cfg.launch_site
+doppler_data_dir = cfg.doppler_data_dir
+orekit_data_path = cfg.orekit_data_path
+space_weather_file = cfg.space_weather_file
+epoch_utc = cfg.epoch_utc
+frame = cfg.frame
+position_m = cfg.position_m
+velocity_mps = cfg.velocity_mps
+area_m2 = cfg.area_m2
+cd = cfg.cd
+mass_kg = cfg.mass_kg
+stations = cfg.stations # namespace dict
 
 
 #drag force function
 def build_drag_force_model(frame, atmosphere, area, drag_coef,mass):
 
-    
+
 
     return #drag force 
     
