@@ -24,7 +24,6 @@ setup_orekit()
 #import libraries
 
 
-#define constants
 #constants/parameters
 from configs.config import load_configs
 cfg = load_configs()
@@ -41,12 +40,12 @@ velocity_mps = cfg.velocity_mps
 area_m2 = cfg.area_m2
 cd = cfg.cd
 mass_kg = cfg.mass_kg
-stations = cfg.stations
+stations = cfg.stations # namespace dict
 
 #drag force function
 def build_drag_force_model(frame, atmosphere, area, drag_coef,mass):
 
-    
+
 
     return #drag force 
     
