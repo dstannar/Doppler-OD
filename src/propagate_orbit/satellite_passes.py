@@ -23,8 +23,14 @@ Outputs:
 # init orekit
 from setup import setup_orekit
 setup_orekit()
+from math import radians
 
 #import orekit libraries
+from org.orekit.bodies import OneAxisEllipsoid, GeodeticPoint
+from org.orekit.propagation.events import ElevationDetector
+from org.orekit.frames import TopocentricFrame
+from org.orekit.propagation.events.handlers import ContinueOnEvent
+from org.orekit.utils import Constants
 
 #constants/parameters
 from configs.config import load_configs
@@ -44,22 +50,52 @@ cd = cfg.cd
 mass_kg = cfg.mass_kg
 stations = cfg.stations # namespace dict
 
-#build ground station and event detector for satellite passes 
-def detect_pass(name, latitude, longtiude, altitude, marconi_min_elevation):
+rE = Constants.WGS84_EARTH_EQUATORIAL_RADIUS #m
+muE = Constants.WGS84_EARTH_MU #m^3/s^2
+flatE = Constants.WGS84_EARTH_FLATTENING 
 
-    #see GeodeticPoint to define ground station location point
+#build ground station and event detector for satellite passes 
+def detect_pass(name, latitude, longtiude, altitude, marconi_min_elevation,fixed_frame):
+
+    #build earth
+    earth = OneAxisEllipsoid(rE,flatE,fixed_frame)
+
+    #see GeodeticPoint to define ground station location point on earth
+    gp = GeodeticPoint(radians(latitude),radians(longtiude),altitude)
 
     #use orekit TopocentricFrame to define ground station frame
+    topo = TopocentricFrame(earth, gp, name)
 
     #use orekit ElevationDetector.withConstantElevation to set up minimum elevation for detection
+    det = ElevationDetector(topo).withConstantElevation(radians(marconi_min_elevation))
 
-    return #detected event/pass
+    #continue propagation after logging event
+    passes = det.withHandler(ContinueOnEvent())
+    
+    #detected event/passes
+    return passes
 
 
 
 #extract interval for aos/los from event detector
-def get_pass_intervals(event_logger)
+def get_pass_intervals(pass_logger):
     
-    #use EventLogger to extraxt time intervals for aos/los
+    #use EventLogger to extraxt time intervals for aos/los as list
+    events=list(pass_logger.getLoggedEvents())
+    events.sort(key=lambda e: e.getState().getDate()) #chronological order
 
-    return #intervals 
+    #store all passes
+    intervals = []
+    aos = None
+    for ev in events: #go through events in order
+        date = ev.getState().getDate() #extract time
+
+        if ev.isIncreasing(): #AOS, eleveation is increasing above threshold
+            aos = date #store this time
+        else: #LOS, if decreasing past threshold
+            if aos is not None and date.compareTo(aos) > 0: #run after an AOS
+                intervals.append((aos, date)) #store interval
+            aos = None #reset next pass
+
+    #return list of intervals 
+    return intervals 

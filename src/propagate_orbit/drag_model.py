@@ -18,8 +18,7 @@
 
 #initialize
 # init orekit
-from setup import setup_orekit
-setup_orekit()
+
 
 #import libraries
 
