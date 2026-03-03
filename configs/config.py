@@ -46,7 +46,7 @@ def load_configs() -> SimpleNamespace:
     # Resolve path fields relative to repo root
     orekit_data_path = (root / sale["orekit_data_path"]).resolve()
     doppler_data_dir = (root / sale["doppler_data_dir"]).resolve()
-    space_weather_file = (root / sale["space_weather_file"]).resolve()
+    space_weather_file =sale["space_weather_file"]
 
     stations = {
         name: SimpleNamespace(
