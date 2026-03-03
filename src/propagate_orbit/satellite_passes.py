@@ -21,7 +21,9 @@ Outputs:
 
 #initialize
 # init orekit
-from setup import setup_orekit
+from yaml import events
+
+from src.setup import setup_orekit
 setup_orekit()
 from math import radians
 
@@ -31,6 +33,7 @@ from org.orekit.propagation.events import ElevationDetector
 from org.orekit.frames import TopocentricFrame
 from org.orekit.propagation.events.handlers import ContinueOnEvent
 from org.orekit.utils import Constants
+from org.orekit.time import AbsoluteDate, TimeScalesFactory
 
 #constants/parameters
 from configs.config import load_configs
@@ -82,7 +85,9 @@ def get_pass_intervals(pass_logger):
     
     #use EventLogger to extraxt time intervals for aos/los as list
     events=list(pass_logger.getLoggedEvents())
-    events.sort(key=lambda e: e.getState().getDate()) #chronological order
+    utc = TimeScalesFactory.getUTC()
+   # ref = AbsoluteDate(1970, 1, 1, 0, 0, 0.0, utc)  # reference for durationFrom()
+    events = list(pass_logger.getLoggedEvents())
 
     #store all passes
     intervals = []

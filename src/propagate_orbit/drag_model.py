@@ -18,10 +18,12 @@
 
 #initialize
 # init orekit
-
+from src.setup import setup_orekit
+setup_orekit()
+from math import radians
 
 #import libraries
-
+from org.orekit.forces.drag import DragForce, IsotropicDrag
 
 #constants/parameters
 from configs.config import load_configs
@@ -42,9 +44,11 @@ mass_kg = cfg.mass_kg
 stations = cfg.stations # namespace dict
 
 #drag force function
+#drag force function
 def build_drag_force_model(frame, atmosphere, area, drag_coef,mass):
-
-
-
-    return #drag force 
+    
+    return DragForce(atmosphere, IsotropicDrag(area, drag_coef))
+ 
+ 
+   
     
