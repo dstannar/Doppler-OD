@@ -3,15 +3,13 @@
 from pathlib import Path
 import sys
 
-
 #initialize
 import os, sys, string, math
 import numpy as np
 import csv
 from pathlib import Path
 
-# Adds the root Doppler-OD directory to python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 
 #constants/parameters
 from configs.config import load_configs
@@ -107,6 +105,7 @@ passes, times, tles = get_TLEs(
     mass = mass_kg,
     csv_path = "passes.csv",
     tle_path = "passes.tle"
+    
              )
 
 
