@@ -104,8 +104,10 @@ passes, tles = get_TLEs(
     gs_min_elev=marconi_min_elevation,
     days=10,
     mass = mass_kg,
-    csv_path = "passes1.csv",
-    tle_path = "passes1.tle"
+    area=area_m2, 
+    cd=cd,
+    csv_path = "passes.csv",
+    tle_path = "passes.tle"
     
              )
 

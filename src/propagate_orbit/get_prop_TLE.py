@@ -87,7 +87,7 @@ def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,
 def get_TLEs(
         position,velocity,epoch,inertial_frame, fixed_frame,muE,
         gs_name, gs_lat, gs_long, gs_alt, gs_min_elev,
-        days,mass,area, cd
+        days,mass,area, cd,
         csv_path, tle_path):
     
    
@@ -110,7 +110,7 @@ def get_TLEs(
     prop.setOrbitType(OrbitType.CARTESIAN)
     prop.setInitialState(state0)
     prop.addForceModel(j2(fixed_frame))
-    prop.addForceModel(drag(fixed_frame, area, cd, atmosphere=None))
+    prop.addForceModel(drag(fixed_frame, area, cd))
 
     #detect and collect pass intervals over the week
     passes = detect_pass(gs_name, gs_lat, gs_long, gs_alt, gs_min_elev, fixed_frame)
