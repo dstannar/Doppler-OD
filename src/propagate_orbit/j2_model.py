@@ -13,7 +13,7 @@ Outputs:
 """
 #initialize
 # init orekit
-from setup import setup_orekit
+from src.setup import setup_orekit
 setup_orekit()
 
 #import libraries
