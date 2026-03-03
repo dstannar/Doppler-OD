@@ -58,7 +58,7 @@ def detect_pass(name, latitude, longtiude, altitude, marconi_min_elevation):
 
 
 #extract interval for aos/los from event detector
-def get_pass_intervals(event_logger)
+def get_pass_intervals(event_logger):
     
     #use EventLogger to extraxt time intervals for aos/los
 

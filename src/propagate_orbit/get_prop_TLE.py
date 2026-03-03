@@ -29,7 +29,8 @@ import orekit
 from org.hipparchus.geometry.euclidean.threed import Vector3D
 from org.hipparchus.ode.nonstiff import ClassicalRungeKuttaIntegrator
 
-from org.orekit.frames import FramesFactory, ITRFVersion, IERSConventions
+from org.orekit.frames import FramesFactory, ITRFVersion
+from org.orekit.utils import IERSConventions
 from org.orekit.time import AbsoluteDate, TimeScalesFactory
 from org.orekit.frames import FramesFactory, TopocentricFrame
 from org.orekit.utils import PVCoordinates, Constants
@@ -39,9 +40,9 @@ from org.orekit.propagation.numerical import NumericalPropagator
 
 
 #import perturbation functions
-from j2_model import build_j2_perturbation_model as j2
-from drag_model import build_drag_force_model as drag
-from satellite_passes import detect_pass, get_pass_intervals
+from .j2_model import build_j2_perturbation_model as j2
+from .drag_model import build_drag_force_model as drag
+from .satellite_passes import detect_pass, get_pass_intervals
 
 #constants/parameters
 from configs.config import load_configs
@@ -78,7 +79,7 @@ def get_TLEs(prelaunch_position,prelaunch_velocity,epoch,frame,mass):
     pre_pos = [5005113.445, 4606039.088, -1129194.884] #m, ECEF
     pre_vel = [1914.034, -268.470, 7437.840] #m/s, ECEF
     rx,ry,rz,vx,vy,vz = pre_pos[0], pre_pos[1], pre_pos[2], pre_vel[0], pre_vel[1], pre_vel[2]
-    pre_epoch=
+    pre_epoch=2
 
     #define constants and parameters
     ecef = FramesFactory.getITRF(ITRFVersion.ITRF_2020,IERSConventions.IERS_2010, True)
