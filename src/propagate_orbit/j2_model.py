@@ -13,11 +13,12 @@ Outputs:
 """
 #initialize
 # init orekit
-from setup import setup_orekit
+from src.setup import setup_orekit
 setup_orekit()
 
 #import libraries
-
+from org.orekit.forces.gravity import HolmesFeatherstoneAttractionModel
+from org.orekit.forces.gravity.potential import GravityFieldFactory
 
 #define constants
 #constants/parameters
@@ -41,6 +42,6 @@ stations = cfg.stations
 #J2 pertubation function
 def build_j2_perturbation_model(frame, altitude):
 
+    provider = GravityFieldFactory.getNormalizedProvider(2,0)
 
-
-    return #J2 perturbation model
+    return HolmesFeatherstoneAttractionModel(frame, provider)
