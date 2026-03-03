@@ -62,6 +62,7 @@ def load_configs() -> SimpleNamespace:
         # SALE mission / propagator
         launch_date=sale["launch_date"],
         launch_site=sale["launch_site"],
+        frequency_hz=sale["frequency_hz"],
         doppler_data_dir=doppler_data_dir,
         orekit_data_path=orekit_data_path,
         space_weather_file=space_weather_file,

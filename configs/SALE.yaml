@@ -13,6 +13,9 @@ doppler_data_dir: "SALE-Doppler"
 launch_date: "2026-03-29"
 launch_site: "AFWTR"
 
+# SAL-E frequency
+frequency_hz: 436965000
+
 # INPUT INITIAL STATE HERE
 epoch_utc: "2026-03-29T12:00:00.000Z" # YYYY-MM-DDTHH:MM:SS.SSSZ
 frame: "ECEF"
