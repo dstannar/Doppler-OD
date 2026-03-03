@@ -40,9 +40,9 @@ from org.orekit.propagation.numerical import NumericalPropagator
 
 
 #import perturbation functions
-from .j2_model import build_j2_perturbation_model as j2
-from .drag_model import build_drag_force_model as drag
-from .satellite_passes import detect_pass, get_pass_intervals
+from src.propagate_orbit.j2_model import build_j2_perturbation_model as j2
+from src.propagate_orbit.drag_model import build_drag_force_model as drag
+from src.propagate_orbit.satellite_passes import detect_pass, get_pass_intervals
 
 #constants/parameters
 from configs.config import load_configs
