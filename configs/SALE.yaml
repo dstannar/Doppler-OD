@@ -9,6 +9,8 @@ space_weather_file: "orekit-data/CSSI-Space-Weather-Data/SpaceWeather-All-v1.2.t
 # Doppler data directory: subdirs per station (SALE-Doppler/Marconi/, SALE-Doppler/EEDepartment/)
 doppler_data_dir: "SALE-Doppler"
 
+cache_dir: "TLE-Cache"
+
 # Space-Track TLE filter: launch date (Transporter 16 projected 03.29) and launch site code (AFWTR is Vandenberg).
 launch_date: "2026-03-29"
 launch_site: "AFWTR"
