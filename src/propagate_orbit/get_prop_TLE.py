@@ -22,6 +22,7 @@ import sys
 
 #initialize
 import os, sys, string, math
+from tempfile import template
 import numpy as np
 import csv
 from pathlib import Path
@@ -63,12 +64,13 @@ from org.orekit.bodies import GeodeticPoint
 from org.orekit.propagation.events import ElevationDetector, EventsLogger
 from org.orekit.propagation.analytical.tle import TLE
 from org.orekit.propagation.analytical.tle.generation import FixedPointTleGenerationAlgorithm
-
+from org.orekit.propagation.events import ExtremumApproachDetector
+from org.orekit.propagation.events.handlers import ContinueOnEvent
 
 #import perturbation functions
 from .j2_model import build_j2_perturbation_model as j2
 from .drag_model import build_drag_force_model as drag
-from .satellite_passes import detect_pass, get_pass_intervals
+from .satellite_passes import detect_pass, get_pass_intervals, get_max_elevations
 
 #return state from initial rv that we can use for propagation 
 def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,mass):
@@ -85,16 +87,28 @@ def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,
 #propagate and get updated TLEs before each pass
 #log predicted time of each pass
 def get_TLEs(
-        position,velocity,epoch,inertial_frame, fixed_frame,muE,
-        gs_name, gs_lat, gs_long, gs_alt, gs_min_elev,
-        days,mass,area, cd,
-        csv_path, tle_path):
+        position,
+        velocity,
+        epoch,
+        inertial_frame, 
+        fixed_frame,
+        muE,
+        gs_name, 
+        gs_lat, 
+        gs_long, 
+        gs_alt, 
+        gs_min_elev,
+        days,
+        mass,
+        area, 
+        cd,
+        csv_path, 
+        tle_path):
     
-   
     """
     Retrurns:
     - TLE file
-    - passes, TLEs
+    - csv file of pass indexes, AOS time, LOS time, TLE epoch time, max elevation for each pass
     """
     utc = TimeScalesFactory.getUTC()
 
@@ -113,20 +127,28 @@ def get_TLEs(
     prop.addForceModel(drag(fixed_frame, area, cd))
 
     #detect and collect pass intervals over the week
-    passes = detect_pass(gs_name, gs_lat, gs_long, gs_alt, gs_min_elev, fixed_frame)
-    logger = EventsLogger()
-    prop.addEventDetector(logger.monitorDetector(passes))
-    ephGen = prop.getEphemerisGenerator()
+    passes,topo = detect_pass(gs_name, gs_lat, gs_long, gs_alt, gs_min_elev, fixed_frame)
+    pass_logger = EventsLogger()
+    prop.addEventDetector(pass_logger.monitorDetector(passes))
 
-    #propagate over window
+    #detect and collect max elevation for each pass
+    max_det = ExtremumApproachDetector(topo).withHandler(ContinueOnEvent())
+    max_el_logger = EventsLogger()
+    prop.addEventDetector(max_el_logger.monitorDetector(max_det))
+
+    #propagate over window, use ephemeris to pull states at each pass
+    ephGen = prop.getEphemerisGenerator()
     end = epoch.shiftedBy(days*86400.0)
     prop.propagate(epoch,end)
 
     ephem = ephGen.getGeneratedEphemeris();
     
-    intervals = get_pass_intervals(logger)
+    #store passes and max elevation after propagation
+    intervals = get_pass_intervals(pass_logger)
+    max_el_list = get_max_elevations(max_el_logger, intervals, topo, fixed_frame)
+    
 
-        # --- template TLE (valid fixed-width strings) ---
+    # template TLE placeholders, 69 characters perline 
     template_line1 = "1 99999U 26001A   26054.50000000  .00000000  00000-0  00000-0 0  9991"
     template_line2 = "2 99999  97.5000  0.0000 0001000   0.0000   0.0000 15.00000000    01"
     template_TLE = TLE(template_line1, template_line2)
@@ -136,14 +158,16 @@ def get_TLEs(
     #store tles 
     pass_rows = []
     for idx, (aos, los) in enumerate(intervals, start=1):
-        tle_epoch = aos.shiftedBy(-600.0)
-        state_at_epoch = ephem.propagate(tle_epoch)
+        tle_epoch = aos.shiftedBy(-600.0) #tle epoch is 10 mins before aos
+        state_at_epoch = ephem.propagate(tle_epoch)  #get state at each epoch from ephemeris
         tle = generator.generate(state_at_epoch, template_TLE)
 
         pass_rows.append({
             "index": idx,
             "aos": aos,
             "los": los,
+            "max_elevation": max_el_list[idx - 1]["max_el_deg"],
+            "az_at_max_elev": max_el_list[idx - 1]["az_at_max_el"],
             "tle_epoch": tle_epoch,
             "line1": tle.getLine1(),
             "line2": tle.getLine2(),
@@ -153,13 +177,15 @@ def get_TLEs(
     csv_path = Path(csv_path)
     with csv_path.open("w", newline="") as fh:
         writer = csv.writer(fh)
-        writer.writerow(["Pass #", "AOS (UTC)", "LOS (UTC)", "TLE Epoch (UTC)"])
+        writer.writerow(["Pass #", "AOS (UTC)", "LOS (UTC)", "TLE Epoch (UTC)","Max Elevation(deg)", "Azimuth at Max Elevation(deg)"])
         for r in pass_rows:
             writer.writerow([
                 r["index"],
                 r["aos"].toString(utc)[:23], #keep only 0.000 seconds
                 r["los"].toString(utc)[:23],
                 r["tle_epoch"].toString(utc)[:23],
+                f"{r['max_elevation']:.2f}",
+                f"{r['az_at_max_elev']:.2f}"
             ])
 
     #write tle file        
@@ -170,9 +196,5 @@ def get_TLEs(
             fh.write(r["line2"].rstrip() + "\n\n")
 
     return csv_path, tle_path
-
-
-
-
 
 
