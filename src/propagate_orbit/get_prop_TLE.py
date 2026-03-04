@@ -23,7 +23,6 @@ import sys
 #initialize
 import os, sys, string, math
 import numpy as np
-<<<<<<< HEAD
 # init orekit
 from setup import setup_orekit
 setup_orekit()
@@ -47,10 +46,9 @@ from org.orekit.propagation.numerical import NumericalPropagator
 from src.propagate_orbit.j2_model import build_j2_perturbation_model as j2
 from src.propagate_orbit.drag_model import build_drag_force_model as drag
 from src.propagate_orbit.satellite_passes import detect_pass, get_pass_intervals
-=======
+
 import csv
 from pathlib import Path
->>>>>>> 8d6526fdec5d062a6223ff0ef674d4c72344eb3c
 
 #constants/parameters
 from configs.config import load_configs
@@ -108,14 +106,6 @@ def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,
     return initial_state
 
 
-<<<<<<< HEAD
-    #define given
-    #state vector from SpaceX prelaunch ODM
-    pre_pos = [5005113.445, 4606039.088, -1129194.884] #m, ECEF
-    pre_vel = [1914.034, -268.470, 7437.840] #m/s, ECEF
-    rx,ry,rz,vx,vy,vz = pre_pos[0], pre_pos[1], pre_pos[2], pre_vel[0], pre_vel[1], pre_vel[2]
-    pre_epoch=2
-=======
 #propagate and get updated TLEs before each pass
 #log predicted time of each pass
 def get_TLEs(
@@ -131,7 +121,6 @@ def get_TLEs(
     - passes, TLEs
     """
     utc = TimeScalesFactory.getUTC()
->>>>>>> 8d6526fdec5d062a6223ff0ef674d4c72344eb3c
 
     rx,ry,rz,vx,vy,vz = position[0], position[1], position[2], velocity[0], velocity[1], velocity[2]
 

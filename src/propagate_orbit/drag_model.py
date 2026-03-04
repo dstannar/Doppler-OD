@@ -61,17 +61,18 @@ def build_drag_force_model(frame,area, drag_coef,atmosphere=None):
         earth = OneAxisEllipsoid(
             Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
             Constants.WGS84_EARTH_FLATTENING,
-            frame,
+            frame
         )
-
+        
         utc = TimeScalesFactory.getUTC()
 
-        ds = DataSource(str(space_weather_file))
-        sw = CssiSpaceWeatherData(ds, utc)
+        ds = DataSource(space_weather_file)
+        sw = CssiSpaceWeatherData(ds, utc)  
         sun = CelestialBodyFactory.getSun()
-        atmosphere = NRLMSISE00(sw, sun, earth, utc)
-
-    # drag perturbation force model (use provided or newly-built atmosphere)
-    return DragForce(atmosphere, IsotropicDrag(area, drag_coef))
-
+        atmosphere = NRLMSISE00(sw,sun,earth,utc)
+       
+        #drag perturbation force model
+        return DragForce(atmosphere, IsotropicDrag(area, drag_coef))
+ 
+   
  
