@@ -1,91 +1,128 @@
 """
 batch_ls_TLE.py
-Weighted least-squares cost for TLE matching.
+Weighted least-squares cost utilities for TLE matching.
 
-- cost_doppler: for each observation time and station, residual = observed
-  doppler − TLE-predicted doppler to give sum of squared residuals
-- cost_state (optional): at the state epoch, position and velocity residuals
-  between the user-supplied state (from propagate_orbit) and the TLE state to give
-  sum of squared residuals.
-- combined cost: cost = cost_doppler + state_weight * cost_state, with a
-  modifiable state_weight so callers can tune how much the propagator state
-  influences the match versus doppler alone depending on how confident we are in propagation
+- ``cost_doppler``: for each observation time and station, residual
+  = observed doppler − TLE‑predicted doppler, summed in a (optionally)
+  weighted least-squares sense.
+- ``cost_state`` (optional): at the state epoch, position and velocity
+  residuals between the user‑supplied state (from ``propagate_orbit``)
+  and the TLE state.
+- ``combined_cost``: ``cost = cost_doppler + state_weight * cost_state``,
+  so callers can tune how much the propagator state influences the match
+  versus doppler alone.
+
+Propagation and measurement modelling are handled elsewhere with Orekit
+(e.g. ``doppler_from_TLE`` and ``state_from_TLE``); this module just
+performs the numerical least‑squares cost computation.
 """
 
+import numpy as np
 
-def cost_doppler(doppler_records, predicted_doppler_hz, sigma_hz=None):
+def cost_doppler(doppler_records: np.ndarray, predicted_doppler_hz: np.ndarray):
     """
     Sum of squared Doppler residuals (observed − predicted).
 
     Parameters
     ----------
-    doppler_records : list of dict or structured array
+    doppler_records
         Each item: time_utc, station_id, doppler_hz (optional: sigma_hz).
-    predicted_doppler_hz : array-like
+        Can be a list of dicts or a numpy structured array.
+    predicted_doppler_hz
         Predicted Doppler in Hz, same length and order as doppler_records.
-    sigma_hz : float or array-like, optional
-        Per-observation or scalar sigma (Hz) for weighted LS; if None, unweighted.
+    sigma_hz
+        Optional per-observation or scalar sigma (Hz) for weighted LS. If
+        ``None``, the function uses unweighted LS unless a ``sigma_hz``
+        field is present in the records, in which case that is used.
 
     Returns
     -------
     float
-        Sum of squared residuals
+        Sum of squared (optionally normalized) residuals.
     """
-    ...
+    observed = doppler_records[:, 2] # doppler_hz
+    predicted = predicted_doppler_hz
+
+    if observed.shape != predicted.shape:
+        raise ValueError(
+            f"Observed and predicted Doppler lengths differ: "
+            f"{observed.shape} vs {predicted.shape}"
+        )
+
+    residuals = observed - predicted
+
+    # return LS cost
+    return float(np.dot(residuals, residuals))
 
 
-def cost_state(state_obs, state_tle, weights=None):
+
+
+def cost_state(state_pred: np.ndarray, state_tle: np.ndarray):
     """
     Sum of squared position and velocity residuals between two 6D states.
 
     Parameters
     ----------
-    state_obs : dict or array-like
+    state_obs
         Observed state: position_m (3), velocity_mps (3) or (6,) array.
-    state_tle : dict or array-like
-        TLE state at same epoch; same format as state_obs.
-    weights : array-like, optional
-        Optional weights (e.g. 1/sigma^2) for position and velocity terms.
+    state_tle
+        TLE state at same epoch; same format as ``state_obs``.
+    weights
+        Optional scalar or per-component weights (e.g. 1/sigma^2) applied to the
+        squared residuals.
 
     Returns
     -------
     float
         Sum of squared residuals (optionally weighted).
     """
-    ...
+    pos_pred = state_pred[0:3]
+    vel_pred = state_pred[3:6]
+    pos_tle = state_tle[0:3]
+    vel_tle = state_tle[3:6]
+
+    delta_pos = pos_pred - pos_tle
+    delta_vel = vel_pred - vel_tle
+    delta = np.concatenate([delta_pos, delta_vel])
+    cost = float(np.dot(delta, delta))
+
+    return cost
 
 
-def combined_cost(
-    doppler_records,
-    predicted_doppler_hz,
-    state_obs=None,
-    state_tle=None,
-    state_weight=0.0,
-    sigma_hz=None,
-):
+def combined_cost(doppler_records: np.ndarray, predicted_doppler_hz: np.ndarray, state_obs = None, state_tle = None, state_weight = 1.0):
     """
-    Combined cost = cost_doppler + state_weight * cost_state.
+    Combined Doppler and state least-squares cost.
 
-    If state_obs or state_tle is None, the state term is omitted.
+    The total cost is::
+
+        cost = cost_doppler(...) + state_weight * cost_state(...)
+
+    If ``state_obs`` or ``state_tle`` is ``None``, the state term is omitted.
 
     Parameters
     ----------
-    doppler_records : list of dict or structured array
+    doppler_records
         Each item: time_utc, station_id, doppler_hz.
-    predicted_doppler_hz : array-like
-        Predicted Doppler in Hz, same length and order as doppler_records.
-    state_obs : dict or array-like, optional
-        Propagator state (position_m, velocity_mps or (6,) at epoch).
-    state_tle : dict or array-like, optional
-        TLE state at same epoch (e.g. from state_from_TLE).
-    state_weight : float
+    predicted_doppler_hz
+        Predicted Doppler in Hz, same length and order as ``doppler_records``.
+    state_obs
+        Propagator state (position_m, velocity_mps or length-6 array) at epoch.
+    state_tle
+        TLE state at same epoch (e.g. from ``state_from_TLE``); same format
+        as ``state_obs``.
+    state_weight
         Weight for state cost term; 0.0 means doppler-only.
-    sigma_hz : float or array-like, optional
-        Per-observation or scalar sigma (Hz) for cost_doppler.
+    sigma_hz
+        Per-observation or scalar sigma (Hz) passed through to ``cost_doppler``.
 
     Returns
     -------
     float
         Combined cost.
     """
-    ...
+    cost = cost_doppler(doppler_records, predicted_doppler_hz)
+
+    if state_obs is not None and state_tle is not None:
+        cost += state_weight * cost_state(state_obs, state_tle)
+
+    return float(cost)

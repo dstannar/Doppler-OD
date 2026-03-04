@@ -11,25 +11,8 @@ Figure out which TLE belongs to us.
 """
 
 
-def load_doppler_profiles(cfg=None):
-    """
-    Load Doppler CSV(s) from doppler_data_dir and return flat doppler_records.
-
-    Uses parse_doppler_data.load_doppler_records. For use with match_tle when
-    callers do not already have doppler_records.
-
-    Parameters
-    ----------
-    cfg : SimpleNamespace, optional
-        Mission config from load_configs(); if None, load_configs() is called.
-
-    Returns
-    -------
-    list of dict or structured array
-        Flat list of records: time_utc, station_id, doppler_hz (optional: sigma_hz).
-    """
-    ...
-
+from src.helpers.parse_doppler_data import load_doppler_records
+from configs.config import load_configs
 
 def match_tle(doppler_records, state=None, state_weight=0.0, cfg=None):
     """
@@ -61,3 +44,12 @@ def match_tle(doppler_records, state=None, state_weight=0.0, cfg=None):
         All candidates sorted by cost ascending, for diagnostics.
     """
     ...
+
+if __name__ == "__main__":
+    cfg = load_configs()
+    doppler_data_dir = cfg.doppler_data_dir
+    stations_config = cfg.stations
+    doppler_records = load_doppler_records(doppler_data_dir, stations_config)
+    best_tle, ranked = match_tle(doppler_records, state=None, state_weight=0.0, cfg=None)
+    print(best_tle)
+    print(ranked)
