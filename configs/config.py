@@ -15,11 +15,6 @@ from types import SimpleNamespace
 import yaml
 
 
-def _repo_root() -> Path:
-    """Repo root (parent of configs/)."""
-    return Path(__file__).resolve().parent.parent
-
-
 def load_configs() -> SimpleNamespace:
     """
     Load SALE.yaml and stations.yaml; return a namespace with all values as attributes.
@@ -31,10 +26,10 @@ def load_configs() -> SimpleNamespace:
     Example:
         cfg = load_configs()
         cfg.launch_date
-        cfg.orekit_data_path  # Path
+        cfg.orekit_data_path
         cfg.stations["Marconi"].lat_deg
     """
-    root = _repo_root()
+    root = Path(__file__).resolve().parent.parent
     configs_dir = root / "configs"
 
     with open(configs_dir / "SALE.yaml", encoding="utf-8") as f:
@@ -42,11 +37,6 @@ def load_configs() -> SimpleNamespace:
 
     with open(configs_dir / "stations.yaml", encoding="utf-8") as f:
         stations_data = yaml.safe_load(f)
-
-    # Resolve path fields relative to repo root
-    orekit_data_path = (root / sale["orekit_data_path"]).resolve()
-    doppler_data_dir = (root / sale["doppler_data_dir"]).resolve()
-    space_weather_file =sale["space_weather_file"]
 
     stations = {
         name: SimpleNamespace(
@@ -63,9 +53,10 @@ def load_configs() -> SimpleNamespace:
         launch_date=sale["launch_date"],
         launch_site=sale["launch_site"],
         frequency_hz=sale["frequency_hz"],
-        doppler_data_dir=doppler_data_dir,
-        orekit_data_path=orekit_data_path,
-        space_weather_file=space_weather_file,
+        orekit_data_path = sale["orekit_data_path"],
+        doppler_data_dir = sale["doppler_data_dir"],
+        space_weather_file =sale["space_weather_file"],
+        cache_dir = sale["cache_dir"],
         epoch_utc=sale["epoch_utc"],
         frame=sale["frame"],
         position_m=sale["position_m"],

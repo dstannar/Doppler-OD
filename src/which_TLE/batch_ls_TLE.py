@@ -1,20 +1,6 @@
 """
 batch_ls_TLE.py
 Weighted least-squares cost utilities for TLE matching.
-
-- ``cost_doppler``: for each observation time and station, residual
-  = observed doppler − TLE‑predicted doppler, summed in a (optionally)
-  weighted least-squares sense.
-- ``cost_state`` (optional): at the state epoch, position and velocity
-  residuals between the user‑supplied state (from ``propagate_orbit``)
-  and the TLE state.
-- ``combined_cost``: ``cost = cost_doppler + state_weight * cost_state``,
-  so callers can tune how much the propagator state influences the match
-  versus doppler alone.
-
-Propagation and measurement modelling are handled elsewhere with Orekit
-(e.g. ``doppler_from_TLE`` and ``state_from_TLE``); this module just
-performs the numerical least‑squares cost computation.
 """
 
 import numpy as np
@@ -26,19 +12,15 @@ def cost_doppler(doppler_records: np.ndarray, predicted_doppler_hz: np.ndarray):
     Parameters
     ----------
     doppler_records
-        Each item: time_utc, station_id, doppler_hz (optional: sigma_hz).
+        Each item: time_utc, station_id, doppler_hz
         Can be a list of dicts or a numpy structured array.
     predicted_doppler_hz
         Predicted Doppler in Hz, same length and order as doppler_records.
-    sigma_hz
-        Optional per-observation or scalar sigma (Hz) for weighted LS. If
-        ``None``, the function uses unweighted LS unless a ``sigma_hz``
-        field is present in the records, in which case that is used.
 
     Returns
     -------
     float
-        Sum of squared (optionally normalized) residuals.
+        Sum of squared residuals.
     """
     observed = doppler_records[:, 2] # doppler_hz
     predicted = predicted_doppler_hz
@@ -51,8 +33,9 @@ def cost_doppler(doppler_records: np.ndarray, predicted_doppler_hz: np.ndarray):
 
     residuals = observed - predicted
 
-    # return LS cost
-    return float(np.dot(residuals, residuals))
+    cost = float(np.dot(residuals, residuals))
+
+    return cost
 
 
 
@@ -74,7 +57,7 @@ def cost_state(state_pred: np.ndarray, state_tle: np.ndarray):
     Returns
     -------
     float
-        Sum of squared residuals (optionally weighted).
+        Sum of squared residuals
     """
     pos_pred = state_pred[0:3]
     vel_pred = state_pred[3:6]
