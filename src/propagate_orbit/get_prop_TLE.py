@@ -24,6 +24,30 @@ import sys
 import os, sys, string, math
 from tempfile import template
 import numpy as np
+# init orekit
+from setup import setup_orekit
+setup_orekit()
+
+#import orekit libraries
+import orekit
+from org.hipparchus.geometry.euclidean.threed import Vector3D
+from org.hipparchus.ode.nonstiff import ClassicalRungeKuttaIntegrator
+
+from org.orekit.frames import FramesFactory, ITRFVersion
+from org.orekit.utils import IERSConventions
+from org.orekit.time import AbsoluteDate, TimeScalesFactory
+from org.orekit.frames import FramesFactory, TopocentricFrame
+from org.orekit.utils import PVCoordinates, Constants
+from org.orekit.orbits import CartesianOrbit, OrbitType
+from org.orekit.propagation import SpacecraftState
+from org.orekit.propagation.numerical import NumericalPropagator
+
+
+#import perturbation functions
+from src.propagate_orbit.j2_model import build_j2_perturbation_model as j2
+from src.propagate_orbit.drag_model import build_drag_force_model as drag
+from src.propagate_orbit.satellite_passes import detect_pass, get_pass_intervals
+
 import csv
 from pathlib import Path
 
