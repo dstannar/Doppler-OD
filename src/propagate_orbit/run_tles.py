@@ -72,7 +72,7 @@ from src.propagate_orbit.get_prop_TLE import get_TLEs
 
 #define constants and parameters
 ecef = FramesFactory.getITRF(ITRFVersion.ITRF_2020,IERSConventions.IERS_2010, True)
-    #orekit uses itrf, which is a type of ecef frame, but for simplicity we wil call it ecef
+#orekit uses itrf, which is a type of ecef frame, but for simplicity we wil call it ecef
 inertial = FramesFactory.getEME2000()
 utc = TimeScalesFactory.getUTC()
 muE=Constants.WGS84_EARTH_MU #m^3/s^2
