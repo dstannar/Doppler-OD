@@ -20,8 +20,8 @@ launch_site = cfg.launch_site
 doppler_data_dir = cfg.doppler_data_dir
 orekit_data_path = cfg.orekit_data_path
 space_weather_file = cfg.space_weather_file
-epoch_utc = cfg.epoch_utc
-frame = cfg.frame
+epoch_utc = cfg.epoch_utc # ISO-8601 string
+epoch = cfg.epoch # Absolute Date
 position_m = cfg.position_m
 velocity_mps = cfg.velocity_mps
 area_m2 = cfg.area_m2
@@ -50,37 +50,26 @@ from org.orekit.propagation.analytical.tle import TLE
 
 
 
-#constants/parameters
-from configs.config import load_configs
-cfg = load_configs()
-# unpack config vals
-launch_date = cfg.launch_date
-launch_site = cfg.launch_site
-doppler_data_dir = cfg.doppler_data_dir
-orekit_data_path = cfg.orekit_data_path
-space_weather_file = cfg.space_weather_file
-epoch_utc = cfg.epoch_utc
-frame = cfg.frame
-position_m = cfg.position_m
-velocity_mps = cfg.velocity_mps
-area_m2 = cfg.area_m2
-cd = cfg.cd
-mass_kg = cfg.mass_kg
-stations = cfg.stations
-
 from src.propagate_orbit.get_prop_TLE import get_TLEs
 
-#define constants and parameters
-ecef = FramesFactory.getITRF(ITRFVersion.ITRF_2020,IERSConventions.IERS_2010, True)
-    #orekit uses itrf, which is a type of ecef frame, but for simplicity we wil call it ecef
-inertial = FramesFactory.getEME2000()
+# ECEF/inertial/epoch in SALE.yaml are Python expressions; evaluate after Orekit is ready.
 utc = TimeScalesFactory.getUTC()
-muE=Constants.WGS84_EARTH_MU #m^3/s^2
+_orekit_globals = {
+    "FramesFactory": FramesFactory,
+    "ITRFVersion": ITRFVersion,
+    "IERSConventions": IERSConventions,
+    "AbsoluteDate": AbsoluteDate,
+    "utc": utc,
+}
+def _eval_orekit(s):
+    return s if not isinstance(s, str) else eval(s, _orekit_globals)
 
-#from SpaceX prelaunch ODM
-pre_pos = cfg.pos
-pre_vel = cfg.vel
-pre_epoch = cfg.epoch
+ecef = _eval_orekit(cfg.ecef_frame)
+inertial = _eval_orekit(cfg.inertial_frame)
+epoch = _eval_orekit(cfg.epoch)
+# orekit uses ITRF, a type of ECEF frame
+muE = Constants.WGS84_EARTH_MU  # m^3/s^2
+
 
 #define Marconi station params
 Marconi = stations["Marconi"]
@@ -90,10 +79,10 @@ Marconi_alt = Marconi.alt_m
 marconi_min_elevation = Marconi.min_elevation_deg
 
 
-passes, tles = get_TLEs(
-    position=pre_pos,
-    velocity =pre_vel,
-    epoch=pre_epoch,
+passes_csv, tle_path_out, states_csv = get_TLEs(
+    position=position_m,
+    velocity =velocity_mps,
+    epoch=epoch,
     inertial_frame=inertial, 
     fixed_frame=ecef,
     muE=muE,
