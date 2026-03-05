@@ -21,10 +21,11 @@ frequency_hz: 436965000
 # INPUT INITIAL STATE HERE
 epoch_utc: "2026-03-29T12:00:00.000Z" # YYYY-MM-DDTHH:MM:SS.SSSZ
 frame: "ECEF"
-position_m: [ 0.0, 0.0, 0.0 ] # SI everywhere, [m]
-velocity_mps: [ 0.0, 0.0, 0.0 ] # [m/s]
+pos: [5005113.445, 4606039.088, -1129194.884] #m, ECEF
+vel: [1914.034, -268.470, 7437.840] #m/s, ECEF
+epoch: AbsoluteDate(2026, 3, 29, 11, 17, 1.208,utc) # orekit absolute date
+epoch_utc: "2026-03-29T11:17:01.208Z" # ISO-8601 string
 
-# Gravity Params, anything changing in here?
 
 # Drag params
 # Using 3U average surface area (m^2).
