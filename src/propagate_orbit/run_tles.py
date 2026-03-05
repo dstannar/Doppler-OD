@@ -107,7 +107,8 @@ passes, tles = get_TLEs(
     area=area_m2, 
     cd=cd,
     csv_path = "passes.csv",
-    tle_path = "passes.tle"
+    tle_path = "passes.tle",
+    state_path = "states.csv"
     
              )
 

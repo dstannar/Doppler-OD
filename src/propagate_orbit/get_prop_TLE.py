@@ -108,6 +108,31 @@ def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,
     return initial_state
 
 
+def get_state(ephemeris, start_date, end_date, fixed_frame, state_csv_path):
+    time_step = 5*60. #5 mins
+
+    state_csv = Path(state_csv_path)
+
+    with state_csv.open("w", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["Date (UTC)", "Rx (m)", "Ry (m)", "Rz (m)", "Vx (m/s)", "Vy (m/s)", "Vz (m/s)" ])
+        t = start_date
+
+        while t.compareTo(end_date) <= 0:
+
+            state = ephemeris.propagate(t)
+            pos = state.getPVCoordinates(fixed_frame).getPosition()
+            vel = state.getPVCoordinates(fixed_frame).getVelocity()
+            writer.writerow([
+                t.toString(TimeScalesFactory.getUTC())[:23], #keep only 0.000 seconds
+                pos.getX(), pos.getY(), pos.getZ(),
+                vel.getX(), vel.getY(), vel.getZ()])
+            t = t.shiftedBy(time_step)
+
+            return state_csv
+
+
+
 #propagate and get updated TLEs before each pass
 #log predicted time of each pass
 def get_TLEs(
@@ -127,7 +152,8 @@ def get_TLEs(
         area, 
         cd,
         csv_path, 
-        tle_path):
+        tle_path,
+        state_path):
     
     """
     Retrurns:
@@ -219,6 +245,9 @@ def get_TLEs(
             fh.write(r["line1"].rstrip() + "\n")
             fh.write(r["line2"].rstrip() + "\n\n")
 
-    return csv_path, tle_path
+    #write state csv file
+    states_csv = get_state(ephem, epoch, end, fixed_frame, state_path)
+
+    return csv_path, tle_path, states_csv
 
 
