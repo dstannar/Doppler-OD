@@ -61,7 +61,8 @@ doppler_data_dir = cfg.doppler_data_dir
 orekit_data_path = cfg.orekit_data_path
 space_weather_file = cfg.space_weather_file
 epoch_utc = cfg.epoch_utc
-frame = cfg.frame
+ecef_frame = cfg.ecef_frame
+inertial_frame = cfg.inertial_frame
 position_m = cfg.position_m
 velocity_mps = cfg.velocity_mps
 area_m2 = cfg.area_m2
@@ -108,9 +109,11 @@ def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,
     return initial_state
 
 
-def get_state(ephemeris, start_date, end_date, fixed_frame, state_csv_path):
-    time_step = 5*60. #5 mins
-
+def get_state(ephemeris, start_date, end_date, fixed_frame, state_csv_path, step_size_sec):
+    """
+    Write propagated state to CSV at each step. step_size_sec (seconds) should match
+    the propagator integrator step so the CSV has one row per propagated value.
+    """
     state_csv = Path(state_csv_path)
 
     with state_csv.open("w", newline="") as fh:
@@ -119,17 +122,16 @@ def get_state(ephemeris, start_date, end_date, fixed_frame, state_csv_path):
         t = start_date
 
         while t.compareTo(end_date) <= 0:
-
             state = ephemeris.propagate(t)
             pos = state.getPVCoordinates(fixed_frame).getPosition()
             vel = state.getPVCoordinates(fixed_frame).getVelocity()
             writer.writerow([
-                t.toString(TimeScalesFactory.getUTC())[:23], #keep only 0.000 seconds
+                t.toString(TimeScalesFactory.getUTC())[:23],  # keep only 0.000 seconds
                 pos.getX(), pos.getY(), pos.getZ(),
                 vel.getX(), vel.getY(), vel.getZ()])
-            t = t.shiftedBy(time_step)
+            t = t.shiftedBy(step_size_sec)
 
-            return state_csv
+    return state_csv
 
 
 
@@ -245,8 +247,8 @@ def get_TLEs(
             fh.write(r["line1"].rstrip() + "\n")
             fh.write(r["line2"].rstrip() + "\n\n")
 
-    #write state csv file
-    states_csv = get_state(ephem, epoch, end, fixed_frame, state_path)
+    #write state csv file (one row per integrator step)
+    states_csv = get_state(ephem, epoch, end, fixed_frame, state_path, step_size)
 
     return csv_path, tle_path, states_csv
 

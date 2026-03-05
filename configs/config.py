@@ -58,12 +58,14 @@ def load_configs() -> SimpleNamespace:
         space_weather_file =sale["space_weather_file"],
         cache_dir = sale["cache_dir"],
         epoch_utc=sale["epoch_utc"],
-        frame=sale["frame"],
+        epoch = sale["epoch"],
+        ecef_frame=sale["ecef_frame"],
+        inertial_frame=sale["inertial_frame"],
         position_m=sale["position_m"],
         velocity_mps=sale["velocity_mps"],
         area_m2=sale["area_m2"],
         cd=sale["cd"],
         mass_kg=sale["mass_kg"],
-        # Stations (dict of SimpleNamespace)
+        # Stations dict
         stations=stations,
     )
