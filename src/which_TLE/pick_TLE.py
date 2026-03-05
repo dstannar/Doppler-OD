@@ -14,7 +14,7 @@ Figure out which TLE belongs to us.
 from src.helpers.parse_doppler_data import load_doppler_records
 from configs.config import load_configs
 
-def match_tle(doppler_records, state=None, state_weight=0.0, cfg=None):
+def match_tle(state=None, state_weight=0.0):
     """
     Find the Space-Track TLE that best matches doppler (and optionally state).
 
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     doppler_data_dir = cfg.doppler_data_dir
     stations_config = cfg.stations
     doppler_records = load_doppler_records(doppler_data_dir, stations_config)
-    best_tle, ranked = match_tle(doppler_records, state=None, state_weight=0.0, cfg=None)
+    states = load_states(ephemeris.csv)
+    best_tle, ranked = match_tle(state, state_weight=0.0)
     print(best_tle)
     print(ranked)
