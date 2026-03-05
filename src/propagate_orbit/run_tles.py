@@ -78,9 +78,9 @@ utc = TimeScalesFactory.getUTC()
 muE=Constants.WGS84_EARTH_MU #m^3/s^2
 
 #from SpaceX prelaunch ODM
-pre_pos = [5004732.349, 4605903.779, -1131435.636] #m, ECEF
-pre_vel = [1915.797, -266.719, 7437.374] #m/s, ECEF
-pre_epoch=AbsoluteDate(2026, 3, 29, 11, 17, 0.608,utc)
+pre_pos = cfg.pos
+pre_vel = cfg.vel
+pre_epoch = cfg.epoch
 
 #define Marconi station params
 Marconi = stations["Marconi"]
