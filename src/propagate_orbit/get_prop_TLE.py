@@ -16,40 +16,22 @@
  - time of each pass after launch (PST)
 
 """
-from pathlib import Path
-import sys
-
 
 #initialize
 import os, sys, string, math
 from tempfile import template
 import numpy as np
+import csv
+from pathlib import Path
+
 # init orekit
-from setup import setup_orekit
+from src.setup import setup_orekit
 setup_orekit()
 
 #import orekit libraries
 import orekit
 from org.hipparchus.geometry.euclidean.threed import Vector3D
 from org.hipparchus.ode.nonstiff import ClassicalRungeKuttaIntegrator
-
-from org.orekit.frames import FramesFactory, ITRFVersion
-from org.orekit.utils import IERSConventions
-from org.orekit.time import AbsoluteDate, TimeScalesFactory
-from org.orekit.frames import FramesFactory, TopocentricFrame
-from org.orekit.utils import PVCoordinates, Constants
-from org.orekit.orbits import CartesianOrbit, OrbitType
-from org.orekit.propagation import SpacecraftState
-from org.orekit.propagation.numerical import NumericalPropagator
-
-
-#import perturbation functions
-from src.propagate_orbit.j2_model import build_j2_perturbation_model as j2
-from src.propagate_orbit.drag_model import build_drag_force_model as drag
-from src.propagate_orbit.satellite_passes import detect_pass, get_pass_intervals
-
-import csv
-from pathlib import Path
 
 #constants/parameters
 from configs.config import load_configs
@@ -69,10 +51,6 @@ area_m2 = cfg.area_m2
 cd = cfg.cd
 mass_kg = cfg.mass_kg
 stations = cfg.stations
-
-# init orekit
-from src.setup import setup_orekit
-setup_orekit()
 
 #import orekit libraries
 import orekit
@@ -96,6 +74,8 @@ from org.orekit.propagation.events.handlers import ContinueOnEvent
 from .j2_model import build_j2_perturbation_model as j2
 from .drag_model import build_drag_force_model as drag
 from .satellite_passes import detect_pass, get_pass_intervals, get_max_elevations
+
+
 
 #return state from initial rv that we can use for propagation 
 def initial_state_ECEF(Rx, Ry, Rz, Vx, Vy, Vz, epoch, frame, inertial_frame,muE,mass):
@@ -132,7 +112,6 @@ def get_state(ephemeris, start_date, end_date, fixed_frame, state_csv_path, step
             t = t.shiftedBy(step_size_sec)
 
     return state_csv
-
 
 
 #propagate and get updated TLEs before each pass
