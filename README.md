@@ -19,6 +19,12 @@ src/doppler_OD: use in combination with propagate_orbit to refine orbit estimati
 
 src.which_TLE: use doppler data to determine which space-track TLE belongs to us. filter TLEs from space-track using info in SALE.yaml. BE CAREFUL WITH SPACE-TRACK API REQUESTS, READ THEIR BEST PRACTICES AND DO NOT SPAM API REQUESTS
 
+### Combined which_TLE + propagate_orbit pipeline
+
+1. From the repo root, run:
+   python scripts/run_which_tle_pipeline.py
+   This propagates from the initial state in config, writes `states.csv`, `passes.csv`, and `passes.tle`, then runs TLE matching using Doppler and the propagator state.
+
 Best practices:
 - USE SI UNITS EVERYWHERE
 - call SAL-E "SALE" in variable names and functions and such, the - gets too annoying

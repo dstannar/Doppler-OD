@@ -235,3 +235,80 @@ def fetch_tles(launch_date, launch_site):
     _save_rate_state(now)
 
     return lines
+
+
+def get_candidate_tles(cfg):
+    """
+    Fetch TLEs from Space-Track and return them as Orekit TLE objects.
+
+    Calls fetch_tles(cfg.launch_date, cfg.launch_site), then parses line pairs
+    into org.orekit.propagation.analytical.tle.TLE instances. Orekit is
+    initialized inside this function so it is safe to call without prior setup.
+
+    Parameters
+    ----------
+    cfg : SimpleNamespace
+        Mission config with launch_date and launch_site.
+
+    Returns
+    -------
+    list
+        List of Orekit TLE objects.
+    """
+    from src.setup import setup_orekit
+    setup_orekit()
+    from org.orekit.propagation.analytical.tle import TLE
+
+    lines = fetch_tles(cfg.launch_date, cfg.launch_site)
+    tles = []
+    i = 0
+    while i < len(lines):
+        line1 = lines[i].strip()
+        if line1.startswith("1 ") and i + 1 < len(lines):
+            line2 = lines[i + 1].strip()
+            if line2.startswith("2 "):
+                tles.append(TLE(line1, line2))
+                i += 2
+                continue
+        i += 1
+    return tles
+
+
+def get_candidate_tles_from_file(filepath):
+    """
+    Load Orekit TLE objects from a local file (no Space-Track API).
+
+    File format: TLE line pairs (line 1 starting with "1 ", line 2 with "2 "),
+    one pair per object. Blank lines are skipped.
+
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to .tle or text file.
+
+    Returns
+    -------
+    list
+        List of Orekit TLE objects.
+    """
+    from src.setup import setup_orekit
+    setup_orekit()
+    from org.orekit.propagation.analytical.tle import TLE
+
+    path = Path(filepath)
+    if not path.exists():
+        raise FileNotFoundError(f"TLE file not found: {path}")
+    text = path.read_text(encoding="utf-8")
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    tles = []
+    i = 0
+    while i < len(lines):
+        line1 = lines[i]
+        if line1.startswith("1 ") and i + 1 < len(lines):
+            line2 = lines[i + 1]
+            if line2.startswith("2 "):
+                tles.append(TLE(line1, line2))
+                i += 2
+                continue
+        i += 1
+    return tles
