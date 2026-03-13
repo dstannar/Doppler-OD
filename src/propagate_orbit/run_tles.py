@@ -25,7 +25,11 @@ mass_kg = cfg.mass_kg
 stations = cfg.stations
 
 # init orekit
-from src.setup import setup_orekit
+try:
+    from src.setup import setup_orekit
+except ModuleNotFoundError:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    from src.setup import setup_orekit
 setup_orekit()
 
 #import orekit libraries
@@ -45,7 +49,11 @@ from org.orekit.propagation.analytical.tle import TLE
 
 
 
-from src.propagate_orbit.get_prop_TLE import get_TLEs
+try:
+    from src.propagate_orbit.get_prop_TLE import get_TLEs
+except ModuleNotFoundError:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    from src.propagate_orbit.get_prop_TLE import get_TLEs
 
 # ECEF/inertial/epoch in SALE.yaml are Python expressions; evaluate after Orekit is ready.
 utc = TimeScalesFactory.getUTC()

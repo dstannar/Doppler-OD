@@ -10,8 +10,14 @@ Figure out which TLE belongs to us.
 - Return the TLE with minimum cost and ranked list/scores for diagnostics.
 """
 
+from pathlib import Path
+import sys
 
-from src.helpers.parse_doppler_data import load_doppler_records
+try:
+    from src.helpers.parse_doppler_data import load_doppler_records
+except ModuleNotFoundError:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    from src.helpers.parse_doppler_data import load_doppler_records
 from configs.config import load_configs
 
 def match_tle(state=None, state_weight=0.0):

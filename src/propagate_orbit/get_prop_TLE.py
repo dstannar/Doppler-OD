@@ -25,7 +25,14 @@ import csv
 from pathlib import Path
 
 # init orekit
-from src.setup import setup_orekit
+from pathlib import Path
+import sys
+
+try:
+    from src.setup import setup_orekit
+except ModuleNotFoundError:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    from src.setup import setup_orekit
 setup_orekit()
 
 #import orekit libraries
