@@ -19,15 +19,17 @@ launch_site: "AFWTR"
 frequency_hz: 436965000
 
 # frames
-ecef_frame: FramesFactory.getITRF(ITRFVersion.ITRF_2020, IERSConventions.IERS_2010, False)
+ecef_frame: FramesFactory.getITRF(ITRFVersion.ITRF_2008, IERSConventions.IERS_2010, False)
 inertial_frame: FramesFactory.getEME2000()
 
 # INPUT INITIAL STATE HERE
-epoch_utc: "2026-03-29T12:00:00.000Z" # YYYY-MM-DDTHH:MM:SS.SSSZ
-position_m: [5005113.445, 4606039.088, -1129194.884] #m, ECEF
-velocity_mps: [1914.034, -268.470, 7437.840] #m/s, ECEF
-epoch: AbsoluteDate(2026, 3, 29, 11, 17, 1.208,utc) # orekit absolute date
-epoch_utc: "2026-03-29T11:17:01.208Z" # ISO-8601 string
+position_m: [4933369.747, 4622640.396, -1355244.697] #m, ECEF (SpaceX OPM r_ecef_m)
+velocity_mps: [2098.608, -83.929, 7394.093] #m/s, ECEF Earth-relative (SpaceX OPM v_ecef_m_per_s)
+epoch: AbsoluteDate(2026, 3, 30, 11, 15, 30, 0.608,utc) # orekit absolute date (deployment epoch)
+epoch_utc: "2026-03-30T11:15:30.148Z" # ISO-8601 string (SpaceX OPM deployment date)
+
+# Debug: enable one-time sanity printouts at startup
+debug: false
 
 
 # Drag params

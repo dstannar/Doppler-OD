@@ -10,5 +10,5 @@ stations:
   EEDepartment:
     lat_deg: 35.30060
     lon_deg: -120.66174
-    alt_m: null # what is this? someone check on google earth
+    alt_m: 94.0 # temporary default until surveyed value is confirmed
     min_elevation_deg: 10.0 # same here

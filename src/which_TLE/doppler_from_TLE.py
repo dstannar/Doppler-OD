@@ -14,31 +14,11 @@ import math
 
 import numpy as np
 
-from configs.config import load_configs
-
 # orekit imports
 from org.orekit.bodies import OneAxisEllipsoid, GeodeticPoint
 from org.orekit.utils import Constants
 from org.orekit.time import AbsoluteDate, TimeScalesFactory
 from org.orekit.propagation.analytical.tle import TLEPropagator
-
-
-
-cfg = load_configs()
-launch_date = cfg.launch_date
-launch_site = cfg.launch_site
-doppler_data_dir = cfg.doppler_data_dir
-orekit_data_path = cfg.orekit_data_path
-space_weather_file = cfg.space_weather_file
-epoch_utc = cfg.epoch_utc
-position_m = cfg.position_m
-velocity_mps = cfg.velocity_mps
-area_m2 = cfg.area_m2
-cd = cfg.cd
-mass_kg = cfg.mass_kg
-stations = cfg.stations
-ecef_frame = cfg.ecef_frame
-inertial_frame = cfg.inertial_frame
 
 
 def _build_station_positions(stations_config, frame):
@@ -112,6 +92,10 @@ def predict_doppler(tle, doppler_records, stations_config, frame, freq_tx_hz):
         time_utc = rec["time_utc"]
         station_id = rec["station_id"]
 
+        if isinstance(time_utc, np.datetime64):
+            time_utc = str(time_utc)
+        elif hasattr(time_utc, "isoformat"):
+            time_utc = time_utc.isoformat()
         target_date = AbsoluteDate(time_utc, TimeScalesFactory.getUTC())
         pv = propagator.getPVCoordinates(target_date, frame)
         sat_pos = pv.getPosition()

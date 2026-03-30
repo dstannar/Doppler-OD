@@ -1,1 +1,5 @@
 PyYAML>=6.0
+numpy>=1.26
+pytest>=8.0
+matplotlib>=3.8
+requests>=2.31

@@ -1,16 +1,4 @@
-"""
-pick_TLE.py
-Figure out which TLE belongs to us.
-
-- Load config (SALE + stations).
-- Load doppler profiles from the configured directory (or accept doppler_records).
-- Obtain candidate TLEs (get_TLEs.get_candidate_tles).
-- For each candidate TLE: predict doppler (doppler_from_TLE.predict_doppler),
-  optionally state at state epoch (state_from_TLE, transformed to ECEF), then
-  combined cost (batch_ls_TLE.combined_cost). Observed state from CSV/config is
-  ECEF; TLE state is transformed TEME->ECEF so both are in the same frame.
-- Return the TLE with minimum cost and ranked list/scores for diagnostics.
-"""
+"""Pick the candidate TLE that best matches Doppler (and optionally state)."""
 
 import csv
 from datetime import datetime
@@ -27,8 +15,7 @@ from configs.config import load_configs
 
 from org.orekit.frames import FramesFactory, ITRFVersion
 from org.orekit.time import AbsoluteDate, TimeScalesFactory
-from org.orekit.utils import PVCoordinates
-from org.orekit.utils import IERSConventions
+from org.orekit.utils import IERSConventions, PVCoordinates
 from org.hipparchus.geometry.euclidean.threed import Vector3D
 
 
@@ -46,20 +33,6 @@ def _doppler_records_for_predict(doppler_raw):
         else:
             out.append({"station_id": row[0], "time_utc": row[1], "doppler_hz": row[2]})
     return out
-
-
-def _resolve_frame(cfg):
-    """Evaluate cfg.ecef_frame (Orekit expression string) and return the frame."""
-    utc = TimeScalesFactory.getUTC()
-    _orekit_globals = {
-        "FramesFactory": FramesFactory,
-        "ITRFVersion": ITRFVersion,
-        "IERSConventions": IERSConventions,
-        "AbsoluteDate": AbsoluteDate,
-        "utc": utc,
-    }
-    s = cfg.ecef_frame
-    return s if not isinstance(s, str) else eval(s, _orekit_globals)
 
 
 def _state_at_epoch(states_list, epoch_utc):
@@ -154,11 +127,11 @@ def _tle_state_in_ecef(tle, epoch_str, ecef_frame):
 
 def match_tle(
     doppler_records,
+    cfg,
     state=None,
     state_weight=1.0,
     states_path="states.csv",
     consider_states=True,
-    cfg=None,
     candidates=None,
 ):
     """
@@ -181,8 +154,8 @@ def match_tle(
     states_path : str or Path
         Path to states CSV (Date (UTC), Rx, Ry, Rz, Vx, Vy, Vz in ECEF). Used
         when consider_states is True and state is None.
-    cfg : SimpleNamespace, optional
-        Mission config; if None, load_configs() is called.
+    cfg : SimpleNamespace
+        Mission config loaded by the caller.
 
     Returns
     -------
@@ -191,15 +164,21 @@ def match_tle(
     ranked : list of (tle, cost)
         All candidates sorted by cost ascending, for diagnostics.
     """
-    if cfg is None:
-        cfg = load_configs()
-
     if doppler_records is None:
         doppler_raw = load_doppler_records(cfg.doppler_data_dir, cfg.stations)
     else:
-        doppler_raw = np.asarray(doppler_records)
-    if doppler_raw.ndim == 1:
-        doppler_raw = np.column_stack([[r[0] for r in doppler_raw], [r[1] for r in doppler_raw], [r[2] for r in doppler_raw]])
+        # Accept (n,3) arrays, lists of tuples, or lists of dicts.
+        if len(doppler_records) > 0 and hasattr(doppler_records[0], "keys"):
+            doppler_raw = np.asarray(
+                [(r["station_id"], r["time_utc"], r["doppler_hz"]) for r in doppler_records],
+                dtype=object,
+            )
+        else:
+            doppler_raw = np.asarray(doppler_records)
+        if doppler_raw.ndim == 1:
+            doppler_raw = np.column_stack(
+                [[r[0] for r in doppler_raw], [r[1] for r in doppler_raw], [r[2] for r in doppler_raw]]
+            )
     doppler_for_predict = _doppler_records_for_predict(doppler_raw)
 
     freq_tx_hz = cfg.frequency_hz
@@ -210,8 +189,7 @@ def match_tle(
     if not candidates:
         raise RuntimeError("No candidate TLEs returned from get_candidate_tles.")
 
-    frame = _resolve_frame(cfg)
-
+    frame = cfg.ecef_frame
     state_obs = None
     state_epoch_str = None
     if consider_states:
@@ -255,25 +233,3 @@ def match_tle(
 
 # Set to False to run doppler-only (don't consider states in batch LS).
 CONSIDER_STATES = False
-
-if __name__ == "__main__":
-    from src.setup import setup_orekit
-    setup_orekit()
-    cfg = load_configs()
-    doppler_data_dir = cfg.doppler_data_dir
-    stations_config = cfg.stations
-    doppler_records = load_doppler_records(doppler_data_dir, stations_config)
-
-    best_tle, ranked = match_tle(
-        doppler_records=doppler_records,
-        state_weight=1.0,
-        consider_states=CONSIDER_STATES,
-        states_path="states.csv",
-        cfg=cfg,
-    )
-    print("Best TLE:")
-    print(best_tle.getLine1())
-    print(best_tle.getLine2())
-    print("\nRanked (cost ascending):")
-    for tle, cost in ranked[:10]:
-        print(f"  cost={cost:.2f}  {tle.getLine1()[:22]}...")
