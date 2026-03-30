@@ -72,14 +72,14 @@ def load_doppler_records(doppler_data_dir, stations_config):
 
             fieldnames = [name.strip() for name in reader.fieldnames]
             required = {"time_utc", "doppler_hz"}
-            missing = required - fieldnames
+            missing = required - set(fieldnames)
             if missing:
                 raise ValueError(f"CSV {csv_path} is missing required columns: {sorted(missing)}")
 
 
             for row_idx, row in enumerate(reader):
-                time_str = (row.get("time_utc")).strip()
-                doppler_str = (row.get("doppler_hz")).strip()
+                time_str = (row.get("time_utc") or "").strip()
+                doppler_str = (row.get("doppler_hz") or "").strip()
 
                 if not time_str or not doppler_str:
                     raise ValueError(f"Missing time_utc or doppler_hz in {csv_path} at row {row_idx}")

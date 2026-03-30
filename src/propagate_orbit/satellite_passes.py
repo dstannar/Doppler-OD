@@ -1,59 +1,13 @@
-"""
-This script will build define our ground station as a topocentric frame, use an event detector
-for the ground station when the satellite will be within line of sight of the antennas. Orekit
-has a practical class that can extract event of a pass of a satellite based on ground station 
-location and pointing elevation. Then, using this event detector, we will use event logger to 
-give us time intervals from AOS (aquisition of signal) to LOS (loss of signal). This interval 
-signifies a "pass". We will calculate the first aos/los epochs after launch and propagate the 
-state vector to those epochs. 
+"""Ground-station pass detection (elevation event + max elevation per pass)."""
 
-Note: using a single propagated TLE for the entire first week would result in poor prediction 
-due to perturbmations and initial orbit uncertainty. Thus, giving Satnet a new TLE through 
-ever pass allows for more accurate estimations over the first week of passes
+from math import degrees, radians
 
-Inputs:
-- 
-
-Outputs:
-- 
-
-"""
-
-#initialize
-# init orekit
-from yaml import events
-
-from src.setup import setup_orekit
-setup_orekit()
-from math import radians
-from math import degrees
-
-#import orekit libraries
-from org.orekit.bodies import OneAxisEllipsoid, GeodeticPoint
+from org.orekit.bodies import GeodeticPoint, OneAxisEllipsoid
 from org.orekit.propagation.events import ElevationDetector
 from org.orekit.frames import TopocentricFrame
 from org.orekit.propagation.events.handlers import ContinueOnEvent
 from org.orekit.utils import Constants
 from org.orekit.time import AbsoluteDate, TimeScalesFactory
-
-#constants/parameters
-from configs.config import load_configs
-cfg = load_configs()
-# unpack config vals
-launch_date = cfg.launch_date
-launch_site = cfg.launch_site
-doppler_data_dir = cfg.doppler_data_dir
-orekit_data_path = cfg.orekit_data_path
-space_weather_file = cfg.space_weather_file
-epoch_utc = cfg.epoch_utc
-ecef_frame = cfg.ecef_frame
-inertial_frame = cfg.inertial_frame
-position_m = cfg.position_m
-velocity_mps = cfg.velocity_mps
-area_m2 = cfg.area_m2
-cd = cfg.cd
-mass_kg = cfg.mass_kg
-stations = cfg.stations # namespace dict
 
 rE = Constants.WGS84_EARTH_EQUATORIAL_RADIUS #m
 muE = Constants.WGS84_EARTH_MU #m^3/s^2

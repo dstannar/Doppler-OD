@@ -33,11 +33,12 @@ def state_from_TLE(tle, epoch):
     else:
         raise TypeError(f"epoch must be an Orekit AbsoluteDate or ISO-8601 str")
 
-    # Use the propagator's frame (same frame as the TLE state)
-    frame = propagator.getFrame()
-
-    # Get PV at target epoch in that frame
-    pv = propagator.getPVCoordinates(target_date, frame)
+    # Propagate to the target epoch and get PV in the propagator's frame.
+    # Using `propagate` avoids issues with certain JPype overload bindings for
+    # `getPVCoordinates(date, frame)` that can surface as a `'super' object`
+    # AttributeError in some environments.
+    state = propagator.propagate(target_date)
+    pv = state.getPVCoordinates()
     p = pv.getPosition()
     v = pv.getVelocity()
 

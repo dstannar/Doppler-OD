@@ -1,16 +1,35 @@
-"""
-Run Orekit's batch least-squares estimator for orbit determination.
+"""Batch LS orbit estimation (Orekit). Requires setup_orekit before import."""
 
-- accept an Orekit propagator builder (same physics as propagate_orbit:
-  gravity, drag, etc.) and the list of Orekit measurements (range-rate from
-  measurement_model).
-- Configure Orekit's BatchLSEstimator with that propagator and measurements.
-  Orekit performs the batch LS: state transition matrix, design matrix,
-  normal equations, and iteration (e.g. Levenberg-Marquardt).
-- Call estimate(); retrieve refined orbital parameters, optional covariance,
-  and diagnostics (iterations, residuals) from Orekit. Return state at epoch
-  and any requested diagnostics in a form usable by solve_od.
-"""
+from typing import Union
+
+import numpy as np
+from org.orekit.estimation.leastsquares import BatchLSEstimator
+from org.orekit.time import AbsoluteDate, TimeScalesFactory
+from org.hipparchus.optim.nonlinear.vector.leastsquares import LevenbergMarquardtOptimizer
+
+
+def _as_absolutedate(epoch: Union[AbsoluteDate, str]) -> AbsoluteDate:
+    """
+    Convert to AbsoluteDate (UTC).
+
+    """
+    if isinstance(epoch, AbsoluteDate):
+        return epoch
+    if not isinstance(epoch, str):
+        raise TypeError(f"epoch must be AbsoluteDate or str, got {type(epoch)}")
+    utc = TimeScalesFactory.getUTC()
+    return AbsoluteDate(epoch, utc)
+
+
+def _realmatrix_to_numpy(m) -> np.ndarray:
+    """Convert RealMatrix to numpy array."""
+    r = m.getRowDimension()
+    c = m.getColumnDimension()
+    out = np.empty((r, c), dtype=float)
+    for i in range(r):
+        for j in range(c):
+            out[i, j] = float(m.getEntry(i, j))
+    return out
 
 
 def run_batch_ls(propagator_builder, measurements, optimizer=None, max_iterations=None, max_evaluations=None):
@@ -36,6 +55,36 @@ def run_batch_ls(propagator_builder, measurements, optimizer=None, max_iteration
         Orekit estimator result object from estimate(), used by
         get_refined_state_and_covariance and get_residuals.
     """
+    if optimizer is None:
+        optimizer = LevenbergMarquardtOptimizer()
+
+    # Configure Orekit's BatchLSEstimator with that propagator and measurements.
+    # Orekit performs the batch LS: state transition matrix, design matrix,
+    # normal equations, and iteration Levenberg-Marquardt
+    estimator = BatchLSEstimator(optimizer, propagator_builder)
+
+    if max_iterations is not None:
+        estimator.setMaxIterations(int(max_iterations))
+    if max_evaluations is not None:
+        estimator.setMaxEvaluations(int(max_evaluations))
+
+    if measurements is None or len(measurements) == 0:
+        raise ValueError("measurements must be a non-empty list of ObservedMeasurement")
+    for m in measurements:
+        estimator.addMeasurement(m)
+
+    # Call estimate(); get refined orbital parameters, covariance,
+    #  Return state at epoch
+    # and any other diagnostics
+    propagators = list(estimator.estimate())
+
+    return {
+        "estimator": estimator,
+        "propagators": propagators,
+        "iterations": int(estimator.getIterationsCount()),
+        "evaluations": int(estimator.getEvaluationsCount()),
+        "optimum": estimator.getOptimum(),
+    }
 
 
 def get_refined_state_and_covariance(estimator_result, epoch):
@@ -57,6 +106,36 @@ def get_refined_state_and_covariance(estimator_result, epoch):
     covariance_6x6 : ndarray or None
         covariance matrix
     """
+    date = _as_absolutedate(epoch)
+
+    propagators = estimator_result["propagators"]
+    if len(propagators) == 0:
+        raise ValueError("No propagators returned by estimate(); check your builder/measurements.")
+
+    prop = propagators[0]
+    state_at_epoch = prop.propagate(date)
+    pv = state_at_epoch.getPVCoordinates()
+
+    pos = pv.getPosition()
+    vel = pv.getVelocity()
+
+    state = {
+        "position_m": [float(pos.getX()), float(pos.getY()), float(pos.getZ())],
+        "velocity_mps": [float(vel.getX()), float(vel.getY()), float(vel.getZ())],
+    }
+
+    estimator = estimator_result["estimator"]
+    covariance_6x6 = None
+    try:
+        cov_all = estimator.getPhysicalCovariances(1.0e-20)
+        cov_all_np = _realmatrix_to_numpy(cov_all)
+
+        if cov_all_np.shape[0] >= 6 and cov_all_np.shape[1] >= 6:
+            covariance_6x6 = cov_all_np[:6, :6].copy()
+    except Exception:
+        covariance_6x6 = None
+
+    return state, covariance_6x6
 
 
 def get_residuals(estimator_result):
@@ -74,3 +153,29 @@ def get_residuals(estimator_result):
         Per-measurement: time (AbsoluteDate or str), observed range rate (m/s),
         predicted range rate (m/s), residual (m/s)
     """
+    estimator = estimator_result["estimator"]
+    last = estimator.getLastEstimations()
+
+    out = []
+
+    it = last.values().iterator()
+    while it.hasNext():
+        est_meas = it.next()
+
+        t = est_meas.getDate()
+        observed = est_meas.getObservedValue()
+        predicted = est_meas.getEstimatedValue()
+
+        if len(observed) != 1 or len(predicted) != 1:
+            raise ValueError(
+                f"Expected 1D (range-rate) measurement, got observed dim={len(observed)}, predicted dim={len(predicted)}"
+            )
+
+        obs0 = float(observed[0])
+        pred0 = float(predicted[0])
+        resid0 = obs0 - pred0
+
+        out.append((t, obs0, pred0, resid0))
+
+    out.sort(key=lambda row: row[0].durationFrom(AbsoluteDate.J2000_EPOCH))
+    return out

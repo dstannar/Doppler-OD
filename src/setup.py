@@ -1,27 +1,25 @@
-'''
-setup.py
-configure orekit
-call config.py to load config
-all shared imports and such go here
-'''
+"""Orekit JVM init and orekit-data path from the mission YAML."""
+
 from pathlib import Path
 
-import yaml
 import orekit
+import yaml
 from orekit.pyhelpers import setup_orekit_curdir
 
+from src.paths import repo_root
 
-def setup_orekit():
-    """Initialize Orekit JVM and load auxiliary data path from configs/SALE.yaml."""
-    vm = orekit.initVM()
 
-    repo_root = Path(__file__).resolve().parent.parent
-    sale_yaml = repo_root / "configs" / "SALE.yaml"
+def setup_orekit(mission_config: str = "SALE.yaml") -> None:
+    orekit.initVM()
 
-    with open(sale_yaml, encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    root = repo_root()
+    mission_yaml = root / "configs" / mission_config
+    if not mission_yaml.exists():
+        mission_yaml = root / "configs" / "SALE.yaml"
 
-    orekit_data_path_str = config["orekit_data_path"]
-    orekit_data_path = (repo_root / orekit_data_path_str).resolve()
+    with open(mission_yaml, encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
 
+    rel = config.get("orekit_data_path", "orekit-data")
+    orekit_data_path = (root / str(rel)).resolve()
     setup_orekit_curdir(filename=str(orekit_data_path))
